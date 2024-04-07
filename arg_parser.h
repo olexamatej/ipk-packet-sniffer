@@ -9,8 +9,9 @@
 #include <getopt.h>
 #include <string>
 #include <cstring>
+#include "connection.h"
 
-int parse_arg(int argc, char *argv[]);
+Connection parse_arg(int argc, char *argv[]);
 
 
 #endif

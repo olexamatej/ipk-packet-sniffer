@@ -5,7 +5,7 @@ LDFLAGS=-lpcap
 CFLAGS := -std=c++20 -g
 
 # Source files
-SRCS := main.cpp arg_parser.cpp
+SRCS := main.cpp arg_parser.cpp connection.cpp
 # Object files
 OBJS := $(SRCS:.cpp=.o)
 
