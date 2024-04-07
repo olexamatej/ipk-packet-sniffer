@@ -17,6 +17,7 @@ class Connection{
         bool icmp6;
         bool igmp;
         bool mld;
+        bool ndp;
 };
 
 #endif

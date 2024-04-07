@@ -15,6 +15,7 @@ Connection parse_arg(int argc, char *argv[]){
         {"icmp6", no_argument, NULL, 0},
         {"igmp", no_argument, NULL, 0},
         {"mld", no_argument, NULL, 0},
+        {"ndp", no_argument, NULL, 0},
         {NULL, 0, NULL, 0}
     };
     int option_index = 0;
@@ -47,7 +48,10 @@ Connection parse_arg(int argc, char *argv[]){
                 conn.igmp = true;
             } else if (strcmp(long_options[option_index].name, "mld") == 0) {
                 conn.mld = true;
+            } else if (strcmp(long_options[option_index].name, "ndp") == 0) {
+                conn.ndp = true;
             }
+
             break;
         default: 
             fprintf(stderr, "Usage: %s -i interface [-p port] [-t] [-u]\n",

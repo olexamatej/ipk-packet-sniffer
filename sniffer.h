@@ -6,12 +6,15 @@
 #include <netinet/ip.h>
 #include <netinet/tcp.h>
 #include "connection.h"
-
+#include <string>
 
 class Sniffer{
     public:
-        int sniff(Connection conn);
-        
+        Sniffer(Connection conn);        
+        int sniff();
+        std::string get_filters();
+        private:
+            Connection conn;
     };
 
 #endif

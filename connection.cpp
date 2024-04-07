@@ -10,6 +10,7 @@ Connection::Connection(){
     this->icmp6 = false;
     this->igmp = false;
     this->mld = false;
+    this->ndp = false;
 }
 
 void Connection::print_connection(){

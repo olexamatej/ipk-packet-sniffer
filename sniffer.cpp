@@ -3,11 +3,51 @@
 #include <ctime>
 #include <iomanip>
 
-int Sniffer::sniff(Connection conn){
+Sniffer::Sniffer(Connection conn){
+    this->conn = conn;
+}
+
+std::string Sniffer::get_filters(){
+    std::string filters = "";
+    if(conn.arp){
+        filters += "arp ||";
+    }
+    if(conn.icmp4){
+        filters += "icmp ||";
+    }
+    if(conn.icmp6){
+        filters += "icmp6 ||";
+    }
+    if(conn.igmp){
+        filters += "igmp ||";
+    }
+    if(conn.mld){
+        filters += "icmp6 and ip6[40] == 130 ||";
+    }
+    if(conn.tcp){
+        filters += "tcp ||";
+    }
+    if(conn.udp){
+        filters += "udp ||";
+    }
+    if(conn.ndp){
+        filters += "icmp6 and (ip6[40] == 133 or ip6[40] == 134 or ip6[40] == 135 or ip6[40] == 136) ||";
+    }
+    if(conn.port != 0){
+        filters += "port " + std::to_string(conn.port) + " ";
+    }
+    if(filters[filters.size()] == '|'){
+        filters.pop_back();
+        filters.pop_back();
+    }
+    return filters;
+}
+
+int Sniffer::sniff(){
     pcap_t *handle;         // Session handle
     char errbuf[PCAP_ERRBUF_SIZE]; // Error string
     struct bpf_program fp;      //compiled filter
-    char filter_exp[] = ""; //filter expression
+    std::string filter_exp = "icmp6 and ip6[40] == 130"; //filter expression
     bpf_u_int32 mask;       // subnet mask
     bpf_u_int32 net;        // IP
     struct pcap_pkthdr header;   //pcap header
@@ -29,12 +69,12 @@ int Sniffer::sniff(Connection conn){
         return(2);
     }
     //applying filter
-    if (pcap_compile(handle, &fp, filter_exp, 0, net) == -1) {
-        fprintf(stderr, "Couldn't parse filter %s: %s\n", filter_exp, pcap_geterr(handle));
+    if (pcap_compile(handle, &fp, filter_exp.c_str(), 0, net) == -1) {
+        fprintf(stderr, "Couldn't parse filter %s: %s\n", filter_exp.c_str(), pcap_geterr(handle));
         return(2);
     }
     if (pcap_setfilter(handle, &fp) == -1) {
-        fprintf(stderr, "Couldn't install filter %s: %s\n", filter_exp, pcap_geterr(handle));
+        fprintf(stderr, "Couldn't install filter %s: %s\n", filter_exp.c_str(), pcap_geterr(handle));
         return(2);
     }
     //grabbing packet

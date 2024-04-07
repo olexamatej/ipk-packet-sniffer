@@ -6,9 +6,9 @@ int main(int argc, char *argv[])
 {
     Connection conn = parse_arg(argc, argv);
     // conn.print_connection();
-    Sniffer sniffer;
+    Sniffer sniffer(conn);
 
-    sniffer.sniff(conn);
+    sniffer.sniff();
 
     return(0);
 }
