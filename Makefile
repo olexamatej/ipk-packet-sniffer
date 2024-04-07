@@ -1,11 +1,11 @@
 # Compiler
 CC := g++
-LDFLAGS=-lpcap
+LDFLAGS=
 # Compiler flags
 CFLAGS := -std=c++20 -g
 
 # Source files
-SRCS := main.cpp arg_parser.cpp connection.cpp
+SRCS := main.cpp arg_parser.cpp connection.cpp sniffer.cpp
 # Object files
 OBJS := $(SRCS:.cpp=.o)
 
@@ -24,7 +24,7 @@ all: $(TARGET)
 
 # Rule to link object files and create the executable
 $(TARGET): $(OBJS)
-	$(CC) $(LDFLAGS) $(CFLAGS) $^ -o $@
+	$(CC) $(LDFLAGS) $(CFLAGS) $^ -lpcap -o $@
 
 # Clean rule
 clean:
@@ -32,5 +32,5 @@ clean:
 
 run:
 	make
-	./ipk-sniffer 
+	sudo ./ipk-sniffer -i eth0 
 	
