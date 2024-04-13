@@ -8,7 +8,8 @@
 
 
 Sniffer::Sniffer(Connection conn)
-{
+{   
+    this->handle = NULL;
     this->conn = conn;
 }
 
@@ -196,9 +197,7 @@ std::string Sniffer::get_filters()
     return filters;
 }
 
-int Sniffer::sniff()
-{
-    pcap_t *handle;                // Session handle
+int Sniffer::init_pcap() {
     char errbuf[PCAP_ERRBUF_SIZE]; // Error string
     struct bpf_program fp;         // compiled filter
     std::string filters = get_filters();
@@ -206,8 +205,6 @@ int Sniffer::sniff()
     std::string filter_exp = filters; // filter expression
     bpf_u_int32 mask;                 // subnet mask
     bpf_u_int32 net;                  // IP
-    struct pcap_pkthdr header;        // pcap header
-    const u_char *packet;             // packet
 
     // getting interface
     const char *dev = conn.interface.c_str();
@@ -238,8 +235,21 @@ int Sniffer::sniff()
         return (2);
     }
 
+    return 0;
+}
+
+int Sniffer::sniff() {
+    struct pcap_pkthdr header;        // pcap header
+    const u_char *packet;             // packet
+
+    if(init_pcap() != 0){
+        return 2;
+    }
+
     for(int i = 0; i < conn.num_packets; i++){
-        packet = pcap_next(handle, &header);
+        
+        
+        packet = pcap_next(this->handle, &header);
 
         // parse ethernet header
         struct ether_header *eth = (struct ether_header *)packet;
@@ -253,10 +263,8 @@ int Sniffer::sniff()
         print_IP_port(packet, eth);
         print_hexdump(packet, header.len);
     }
-    
-
-    // parse ip header
 
     pcap_close(handle);
     return (0);
 }
+

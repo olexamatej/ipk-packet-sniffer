@@ -12,6 +12,7 @@ class Sniffer{
     public:
         Sniffer(Connection conn);        
         int sniff();
+        int init_pcap();
         std::string get_filters();
         void print_mac(const u_char *packet, int start, const char *label);
         void print_hexdump(const u_char *packet, int len);
@@ -23,8 +24,9 @@ class Sniffer{
         void printARP(const u_char *packet);
 
         private:
-            Connection conn;
-    };
+        Connection conn;
+        pcap_t *handle;
+};
 
 
 #endif
