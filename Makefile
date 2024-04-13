@@ -32,5 +32,4 @@ clean:
 
 run:
 	make
-	sudo ./ipk-sniffer -i eth0 
-	
+	sudo ./ipk-sniffer -i lo --icmp6
