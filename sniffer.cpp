@@ -131,11 +131,13 @@ std::string Sniffer::get_filters()
 {   
     std::string filters = "";
 
-    if (conn.port != 0)
-    {
-        filters += "port " + std::to_string(conn.port) + "&&";
+    if(conn.port_dst != 0){
+        filters += "dst port " + std::to_string(conn.port_dst) + "||";
     }
-
+    if(conn.port_src != 0){
+        filters += "src port " + std::to_string(conn.port_src) + "&&";
+    }
+    //
 
     if (conn.tcp && conn.udp)
     {

@@ -1,7 +1,8 @@
 #include "connection.h"
 
 Connection::Connection(){
-    this->port = 0;
+    this->port_dst = 0;
+    this->port_src = 0;
     this->tcp = false;
     this->udp = false;
     this->num_packets = 1;
@@ -15,7 +16,6 @@ Connection::Connection(){
 
 void Connection::print_connection(){
     std::cout << "Interface: " << this->interface << std::endl;
-    std::cout << "Port: " << this->port << std::endl;
     std::cout << "TCP: " << this->tcp << std::endl;
     std::cout << "UDP: " << this->udp << std::endl;
     std::cout << "Number of packets: " << this->num_packets << std::endl;

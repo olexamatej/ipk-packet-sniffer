@@ -32,4 +32,4 @@ clean:
 
 run:
 	make
-	sudo ./ipk-sniffer -i lo
+	sudo ./ipk-sniffer -i lo -n 500

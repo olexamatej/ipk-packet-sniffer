@@ -8,7 +8,6 @@ class Connection{
         Connection();
         void print_connection();
         std::string interface;
-        int port;
         bool tcp;
         bool udp;
         int num_packets;
@@ -18,6 +17,8 @@ class Connection{
         bool igmp;
         bool mld;
         bool ndp;
+        int port_dst;
+        int port_src;
 };
 
 #endif

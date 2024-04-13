@@ -7,9 +7,10 @@ Connection parse_arg(int argc, char *argv[]){
   
     const option long_options[] = {
         {"interface", required_argument, NULL, 'i'},
-        {"port", required_argument, NULL, 'p'},
         {"tcp", no_argument, NULL, 't'},
         {"udp", no_argument, NULL, 'u'},
+        {"port-destination", required_argument, NULL, 0},
+        {"port-source", required_argument, NULL, 0},
         {"arp", no_argument, NULL, 0},
         {"icmp4", no_argument, NULL, 0},
         {"icmp6", no_argument, NULL, 0},
@@ -26,7 +27,8 @@ Connection parse_arg(int argc, char *argv[]){
             conn.interface = optarg;
             break;
         case 'p':
-            conn.port = atoi(optarg);
+            conn.port_dst = atoi(optarg);
+            conn.port_src = atoi(optarg);
             break;
         case 't':
             conn.tcp = true;
@@ -54,8 +56,12 @@ Connection parse_arg(int argc, char *argv[]){
                 conn.mld = true;
             } else if (strcmp(long_options[option_index].name, "ndp") == 0) {
                 conn.ndp = true;
+            } else if (strcmp(long_options[option_index].name, "port-destination") == 0) {
+                conn.port_dst = atoi(optarg);
+            } else if (strcmp(long_options[option_index].name, "port-source") == 0) {
+                conn.port_src = atoi(optarg);
             }
-
+            
             break;
         default: 
             fprintf(stderr, "Usage: %s -i interface [-p port] [-t] [-u]\n",
