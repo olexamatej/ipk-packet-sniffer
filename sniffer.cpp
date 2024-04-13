@@ -7,9 +7,28 @@ Sniffer::Sniffer(Connection conn){
     this->conn = conn;
 }
 
+
 std::string Sniffer::get_filters(){
     std::string filters = "";
-    if(conn.arp){
+
+
+    if(conn.port != 0){
+        filters += "port " + std::to_string(conn.port) + "&&";
+    }
+    if(conn.tcp && conn.udp){
+        filters += "(tcp || udp) &&";
+    }
+    else if(conn.udp && !conn.tcp){
+        filters += "udp &&";
+    }
+    else if(conn.tcp && !conn.udp){
+        filters += "tcp &&";
+    }
+    filters += "(";
+    if(conn.ndp){
+        filters += "icmp6 and (ip6[40] == 133 or ip6[40] == 134 or ip6[40] == 135 or ip6[40] == 136) ||";
+    }
+     if(conn.arp){
         filters += "arp ||";
     }
     if(conn.icmp4){
@@ -22,24 +41,22 @@ std::string Sniffer::get_filters(){
         filters += "igmp ||";
     }
     if(conn.mld){
-        filters += "icmp6 and ip6[40] == 130 ||";
+        filters += "icmp6 and ip6[40] == 130";
     }
-    if(conn.tcp){
-        filters += "tcp ||";
+    //if there is ( at the end of the string, remove it
+
+    if(filters[filters.size() - 1] == '|'){
+        filters.pop_back();
+        filters.pop_back();
+        filters+= ")";
     }
-    if(conn.udp){
-        filters += "udp ||";
-    }
-    if(conn.ndp){
-        filters += "icmp6 and (ip6[40] == 133 or ip6[40] == 134 or ip6[40] == 135 or ip6[40] == 136) ||";
-    }
-    if(conn.port != 0){
-        filters += "port " + std::to_string(conn.port) + " ";
-    }
-    if(filters[filters.size()] == '|'){
+    else if(filters[filters.size() - 1] == '('){
+        filters.pop_back();
         filters.pop_back();
         filters.pop_back();
     }
+
+
     return filters;
 }
 
@@ -47,7 +64,10 @@ int Sniffer::sniff(){
     pcap_t *handle;         // Session handle
     char errbuf[PCAP_ERRBUF_SIZE]; // Error string
     struct bpf_program fp;      //compiled filter
-    std::string filter_exp = "icmp6 and ip6[40] == 130"; //filter expression
+    std::string filters = get_filters();
+    
+    std::cout << "filters:" << filters << std::endl;
+    std::string filter_exp = filters; //filter expression
     bpf_u_int32 mask;       // subnet mask
     bpf_u_int32 net;        // IP
     struct pcap_pkthdr header;   //pcap header
@@ -80,11 +100,11 @@ int Sniffer::sniff(){
     //grabbing packet
     packet = pcap_next(handle, &header);
 
-    //parse ip header
-    struct ip *iph = (struct ip *)(packet + 14);
-    //parse tcp header
-    struct tcphdr *tcph=(struct tcphdr*)(packet + 14 + iph->ip_hl*4);
+    struct ethhdr *eth = (struct ethhdr *)(packet);
 
+    struct ip *iph = (struct ip *)(packet + 14);
+    
+    struct tcphdr *tcph=(struct tcphdr*)(packet + 14 + iph->ip_hl*4);
 
     //change header.ts.tv_sec to ISO format
 
@@ -114,9 +134,19 @@ int Sniffer::sniff(){
  
     //frame length
     std::cout << "frame length: " << header.len << std::endl;
-    //src and dst ip
-    std::cout << "src ip: " << inet_ntoa(iph->ip_src) << "\n";
-    std::cout << "dst ip: " << inet_ntoa(iph->ip_dst) << "\n";
+    if (ntohs(eth->h_proto) == ETH_P_IP) {
+        // IPv4 packet
+        std::cout << "src IP: " << inet_ntoa(iph->ip_src) << "\n";
+        std::cout << "dst IP: " << inet_ntoa(iph->ip_dst) << "\n";
+    } else if (ntohs(eth->h_proto) == ETH_P_IPV6) {
+        // IPv6 packet
+        struct ip6_hdr *iph6 = (struct ip6_hdr *)(packet + sizeof(struct ethhdr));
+        char str[INET6_ADDRSTRLEN];
+        inet_ntop(AF_INET6, &(iph6->ip6_src), str, INET6_ADDRSTRLEN);
+        std::cout << "src IP: " << str << "\n";
+        inet_ntop(AF_INET6, &(iph6->ip6_dst), str, INET6_ADDRSTRLEN);
+        std::cout << "dst IP: " << str << "\n";
+    }
 
     //port
     std::cout << "src port: " << ntohs(tcph->source) << "\n";
