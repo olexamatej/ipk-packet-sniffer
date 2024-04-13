@@ -4,20 +4,138 @@
 #include <iomanip>
 #include <netinet/ether.h>
 #include <netinet/ip6.h>
+    #include <netinet/udp.h>
+
 
 Sniffer::Sniffer(Connection conn)
 {
     this->conn = conn;
 }
 
-std::string Sniffer::get_filters()
+void Sniffer::print_frame_length(const struct pcap_pkthdr header)
 {
+    std::cout << "frame length: " << header.len << std::endl;
+}
+
+void Sniffer::print_mac(const u_char *packet, int start, const char *label)
+{
+    std::cout << label;
+    for (int i = start; i < start + 6; i++)
+    {
+        printf("%02x", packet[i]);
+        if (i < start + 5)
+        {
+            printf(":");
+        }
+    }
+    std::cout << std::endl;
+}
+
+void Sniffer::print_hexdump(const u_char *packet, int len)
+{
+    for (int i = 0; i < len; ++i)
+    {
+        // byte offset at start
+        if (i % 16 == 0)
+            printf("0x%04x  ", i);
+
+        // byte in hex
+        printf("%02x ", packet[i]);
+
+        // ascii at the end
+        if (i % 16 == 7)
+            printf(" "); // space in middle
+        if (i % 16 == 15 || i == len - 1)
+        {
+            for (int j = 0; j < 15 - i % 16; ++j)
+                printf("   "); // extra spaces if not full line
+            if (i % 16 < 8)
+                printf(" "); // extra space
+            printf(" ");
+            for (int j = i - i % 16; j <= i; ++j)
+            {
+                char ch = isprint(packet[j]) ? packet[j] : '.';
+                printf("%c", ch);
+            }
+            printf("\n");
+        }
+    }
+}
+
+void Sniffer::print_timestamp(const struct pcap_pkthdr header)
+{
+    std::time_t ts = header.ts.tv_sec;
+    std::tm *tm = std::localtime(&ts);
+    std::cout << "timestamp: " << std::put_time(tm, "%FT%T%z") << std::endl;
+}
+
+void Sniffer::print_IP_port(const u_char *packet, struct ether_header *eth) {
+    uint16_t ether_type = ntohs(eth->ether_type);
+
+    if (ether_type == ETH_P_IP) {
+        printIPv4(packet);
+    } else if (ether_type == ETH_P_IPV6) {
+        printIPv6(packet);
+    } else if (ether_type == ETH_P_ARP) {
+        printARP(packet);
+    }
+}
+
+void Sniffer::printIPv4(const u_char *packet) {
+    struct ip *iph = (struct ip *)(packet + 14);
+    struct tcphdr *tcph = (struct tcphdr *)(packet + 14 + iph->ip_hl * 4);
+
+    std::cout << "src IP: " << inet_ntoa(iph->ip_src) << "\n";
+    std::cout << "dst IP: " << inet_ntoa(iph->ip_dst) << "\n";
+    std::cout << "src port: " << ntohs(tcph->source) << "\n";
+    std::cout << "dst port: " << ntohs(tcph->dest) << "\n";
+}
+
+void Sniffer::printIPv6(const u_char *packet) {
+    struct ip6_hdr *ip6h = (struct ip6_hdr *)(packet + 14);
+    struct tcphdr *tcph = (struct tcphdr *)(packet + 14 + 40);
+    char src_ip[INET6_ADDRSTRLEN];
+    inet_ntop(AF_INET6, &ip6h->ip6_src, src_ip, INET6_ADDRSTRLEN);
+
+    std::cout << "src IP: " << src_ip << "\n";
+    std::cout << "src port: " << ntohs(tcph->source) << "\n";
+    std::cout << "dst port: " << ntohs(tcph->dest) << "\n";
+}
+
+void Sniffer::printARP(const u_char *packet) {
+    struct ether_arp *arp = (struct ether_arp *)(packet + 14);
+
+    std::cout << "src IP: ";
+    for (int i = 0; i < 4; i++) {
+        printf("%d", arp->arp_spa[i]);
+        if (i < 3) {
+            printf(".");
+        }
+    }
+    std::cout << std::endl;
+
+    std::cout << "dst IP: ";
+    for (int i = 0; i < 4; i++) {
+        printf("%d", arp->arp_tpa[i]);
+        if (i < 3) {
+            printf(".");
+        }
+    }
+    std::cout << std::endl;
+}
+
+
+
+std::string Sniffer::get_filters()
+{   
     std::string filters = "";
 
     if (conn.port != 0)
     {
         filters += "port " + std::to_string(conn.port) + "&&";
     }
+
+
     if (conn.tcp && conn.udp)
     {
         filters += "(tcp || udp) &&";
@@ -57,6 +175,10 @@ std::string Sniffer::get_filters()
     }
     // if there is ( at the end of the string, remove it
 
+    if(filters.size() < 2){
+        return "";
+    }
+
     if (filters[filters.size() - 1] == '|')
     {
         filters.pop_back();
@@ -69,6 +191,7 @@ std::string Sniffer::get_filters()
         filters.pop_back();
         filters.pop_back();
     }
+
 
     return filters;
 }
@@ -114,256 +237,24 @@ int Sniffer::sniff()
         fprintf(stderr, "Couldn't install filter %s: %s\n", filter_exp.c_str(), pcap_geterr(handle));
         return (2);
     }
-    // grabbing packet
-    packet = pcap_next(handle, &header);
 
-    // parse ethernet header
-    struct ether_header *eth = (struct ether_header *)packet;
+    for(int i = 0; i < conn.num_packets; i++){
+        packet = pcap_next(handle, &header);
 
-    if (ntohs(eth->ether_type) == ETH_P_IP)
-    {
+        // parse ethernet header
+        struct ether_header *eth = (struct ether_header *)packet;
+
         struct ip *iph = (struct ip *)(packet + 14);
-        // parse tcp header
-        struct tcphdr *tcph = (struct tcphdr *)(packet + 14 + iph->ip_hl * 4);
-        // change header.ts.tv_sec to ISO format
-
-        std::time_t ts = header.ts.tv_sec;
-        std::tm *tm = std::localtime(&ts);
-        std::cout << "timestamp: " << std::put_time(tm, "%FT%T%z") << std::endl;
-
-        // src mac
-        std::cout << "src MAC: ";
-        for (int i = 6; i < 12; i++)
-        {
-            printf("%02x", packet[i]);
-            if (i < 11)
-            {
-                printf(":");
-            }
-        }
-        std::cout << std::endl;
-
-        // dst mac
-        std::cout << "dst MAC: ";
-        for (int i = 0; i < 6; i++)
-        {
-            printf("%02x", packet[i]);
-            if (i < 5)
-            {
-                printf(":");
-            }
-        }
-        std::cout << std::endl;
-
-        // frame length
-        std::cout << "frame length: " << header.len << std::endl;
-
-        //src IP
-        std::cout << "src IP: " << inet_ntoa(iph->ip_src) << "\n";
-        //dst IP
-        std::cout << "dst IP: " << inet_ntoa(iph->ip_dst) << "\n";
-
-        // port
-        std::cout << "src port: " << ntohs(tcph->source) << "\n";
-        std::cout << "dst port: " << ntohs(tcph->dest) << "\n";
-
-        // print hexdump
-        for (int i = 0; i < header.len; ++i)
-        {
-            // byte offset at start
-            if (i % 16 == 0)
-                printf("0x%04x  ", i);
-
-            // byte in hex
-            printf("%02x ", packet[i]);
-
-            // ascii at the end
-            if (i % 16 == 7)
-                printf(" "); // space in middle
-            if (i % 16 == 15 || i == header.len - 1)
-            {
-                for (int j = 0; j < 15 - i % 16; ++j)
-                    printf("   "); // extra spaces if not full line
-                if (i % 16 < 8)
-                    printf(" "); // extra space
-                printf(" ");
-                for (int j = i - i % 16; j <= i; ++j)
-                {
-                    char ch = isprint(packet[j]) ? packet[j] : '.';
-                    printf("%c", ch);
-                }
-                printf("\n");
-            }
-        }
-    }
-
-    else if (ntohs(eth->ether_type) == ETH_P_IPV6)
-    {
-        struct ip6_hdr *ip6h = (struct ip6_hdr *)(packet + 14);
-        // parse tcp header
-        struct tcphdr *tcph = (struct tcphdr *)(packet + 14 + 40);
-        // change header.ts.tv_sec to ISO format
-        std::time_t ts = header.ts.tv_sec;
-        std::tm *tm = std::localtime(&ts);
-        std::cout << "timestamp: " << std::put_time(tm, "%FT%T%z") << std::endl;
-
-        // src mac
-        std::cout << "src MAC: ";
-        for (int i = 6; i < 12; i++)
-        {
-            printf("%02x", packet[i]);
-            if (i < 11)
-            {
-                printf(":");
-            }
-        }
-        std::cout << std::endl;
-
-        // dst mac
-        std::cout << "dst MAC: ";
-        for (int i = 0; i < 6; i++)
-        {
-            printf("%02x", packet[i]);
-            if (i < 5)
-            {
-                printf(":");
-            }
-        }
-        std::cout << std::endl;
-
-        // frame length
-        std::cout << "frame length: " << header.len << std::endl;
-
-        //src IP
-        char src_ip[INET6_ADDRSTRLEN];
-        inet_ntop(AF_INET6, &ip6h->ip6_src, src_ip, INET6_ADDRSTRLEN);
-        std::cout << "src IP: " << src_ip << "\n";
         
-        // port
-
-        std::cout << "src port: " << ntohs(tcph->source) << "\n";
-        std::cout << "dst port: " << ntohs(tcph->dest) << "\n";
-
-        // print hexdump
-
-        for (int i = 0; i < header.len; ++i)
-        {
-            // byte offset at start
-            if (i % 16 == 0)
-                printf("0x%04x  ", i);
-
-            // byte in hex
-            printf("%02x ", packet[i]);
-
-            // ascii at the end
-            if (i % 16 == 7)
-                printf(" "); // space in middle
-            if (i % 16 == 15 || i == header.len - 1)
-            {
-                for (int j = 0; j < 15 - i % 16; ++j)
-                    printf("   "); // extra spaces if not full line
-                if (i % 16 < 8)
-                    printf(" "); // extra space
-                printf(" ");
-                for (int j = i - i % 16; j <= i; ++j)
-                {
-                    char ch = isprint(packet[j]) ? packet[j] : '.';
-                    printf("%c", ch);
-                }
-                printf("\n");
-            }
-        }
-    }  
-    //if its arp
-    else if (ntohs(eth->ether_type) == ETH_P_ARP)
-    {
-        struct ether_arp *arp = (struct ether_arp *)(packet + 14);
-        // change header.ts.tv_sec to ISO format
-        std::time_t ts = header.ts.tv_sec;
-        std::tm *tm = std::localtime(&ts);
-        std::cout << "timestamp: " << std::put_time(tm, "%FT%T%z") << std::endl;
-
-        // src mac
-        std::cout << "src MAC: ";
-        for (int i = 6; i < 12; i++)
-        {
-            printf("%02x", packet[i]);
-            if (i < 11)
-            {
-                printf(":");
-            }
-        }
-        std::cout << std::endl;
-
-        // dst mac
-        std::cout << "dst MAC: ";
-        for (int i = 0; i < 6; i++)
-        {
-            printf("%02x", packet[i]);
-            if (i < 5)
-            {
-                printf(":");
-            }
-        }
-        std::cout << std::endl;
-
-        // frame length
-        std::cout << "frame length: " << header.len << std::endl;
-
-        //src IP
-        std::cout << "src IP: ";
-        for (int i = 0; i < 4; i++)
-        {
-            printf("%d", arp->arp_spa[i]);
-            if (i < 3)
-            {
-                printf(".");
-            }
-        }
-        std::cout << std::endl;
-
-        //dst IP
-        std::cout << "dst IP: ";
-        for (int i = 0; i < 4; i++)
-        {
-            printf("%d", arp->arp_tpa[i]);
-            if (i < 3)
-            {
-                printf(".");
-            }
-        }
-        std::cout << std::endl;
-
-        // print hexdump
-        for (int i = 0; i < header.len; ++i)
-        {
-            // byte offset at start
-            if (i % 16 == 0)
-                printf("0x%04x  ", i);
-
-            // byte in hex
-            printf("%02x ", packet[i]);
-
-            // ascii at the end
-            if (i % 16 == 7)
-                printf(" "); // space in middle
-            if (i % 16 == 15 || i == header.len - 1)
-            {
-                for (int j = 0; j < 15 - i % 16; ++j)
-                    printf("   "); // extra spaces if not full line
-                if (i % 16 < 8)
-                    printf(" "); // extra space
-                printf(" ");
-                for (int j = i - i % 16; j <= i; ++j)
-                {
-                    char ch = isprint(packet[j]) ? packet[j] : '.';
-                    printf("%c", ch);
-                }
-                printf("\n");
-            }
-        }
+        print_timestamp(header);
+        print_mac(packet, 6, "src MAC: ");
+        print_mac(packet, 0, "dst MAC: ");
+        print_frame_length(header);
+        print_IP_port(packet, eth);
+        print_hexdump(packet, header.len);
     }
     
+
     // parse ip header
 
     pcap_close(handle);

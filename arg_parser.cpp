@@ -35,6 +35,10 @@ Connection parse_arg(int argc, char *argv[]){
             conn.udp = true;
             break;
         case 'n':
+            if (optarg == NULL) {
+                std::cerr << "Error: -n requires a numeric argument\n";
+                exit(EXIT_FAILURE);
+            }
             conn.num_packets = atoi(optarg);
             break;
         case 0:
