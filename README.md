@@ -9,11 +9,11 @@ Matej Olexa (xolexa03) 21.4.2024
 [Teória k implementácii](#Teoria-k-implementacii)  
 [Implementacia](#Implementacia)  
 [Testovanie](#Testovanie)
-
+[Zdroje](#Zdroje)
 
 ## Stručný popis
 
-Implementácia sledovača packetov `packet sniffer` pomocou použitia knižnice `pdap` na základe požiadavkov zadania varianty `ZETA` pre IPK.
+Implementácia sledovača packetov `packet sniffer` pomocou použitia knižnice `pdap` na základe požiadavkov zadania varianty `ZETA` pre IPK [1].
 
 ## Spustenie
 
@@ -52,15 +52,15 @@ Sledovač paketov zachytáva pakety zo sieťovej komunikácie na úrovni rozhran
 ### IPv4 pakety
 IPv4 pakety sú základom prenosu dát pomocou `Internet Protocol version 4`. Každý paket má svoju hlavičku `header` a dáta `payload`. Hlavička obsahuje informácie o prenose dát s informáciami ako je dĺžka paketu, IP adresy a kontrolný súčet `checksum`.
 
-Veľkosť hlavičky tohto paketu nieje vopred daná a následuju ju dáta `payload`. IP adresa je dlhá 32 bitov.  
+Veľkosť hlavičky tohto paketu nieje vopred daná a následuju ju dáta `payload`. IP adresa je dlhá 32 bitov.[2]  
 
 ### IPv6 pakety
 IPv6 pakety slúžia na prenos dát v `Internet Protocol version 6`. Každý paket má svoju hlavičku `header` a dáta `payload`. Hlavička obsahuje informácie pre prenos dát a ich doručenie, ako sú IP adresy, dĺžka paketu, `traffic class`, `flow label`, `hop limit` a ďalšie pole hlavičky, ktoré určuje aký typ dát je prenášaný v `payload`.
 
-Veľkosť hlavičky tohto paketu je 40 byteov. Hlavička taktiež obsahuje informácie naviac, oproti IPv4 paketom. IPv6 podporuje rozšírenú hlavičku, ktorá obsahuje ďalšie informácie a rozšírenie. IPv6 pakety neobsahujú konečný súčet. IP adresa je dlhá 128 bitov a je v hexadecimálnom formáte.
+Veľkosť hlavičky tohto paketu je 40 byteov. Hlavička taktiež obsahuje informácie naviac, oproti IPv4 paketom. IPv6 podporuje rozšírenú hlavičku, ktorá obsahuje ďalšie informácie a rozšírenie. IPv6 pakety neobsahujú konečný súčet. IP adresa je dlhá 128 bitov a je v hexadecimálnom formáte.[3]  
 
 ### ARP pakety
-ARP pakety sú používané pre mapovaní IP adries na MAC adresy na lokálnej sieti. Sú zložené z hlavičky `header` nasledovanou poľami pre zdrojovú a cieľovú MAC adresu a zdrojovú a cieľovú IP adresu. Hlavička obsahuje informácie o typu hardwareu, typ protokolu, operačného kódu `operation code` a veľkosti protokolových adries.
+ARP pakety sú používané pre mapovaní IP adries na MAC adresy na lokálnej sieti. Sú zložené z hlavičky `header` nasledovanou poľami pre zdrojovú a cieľovú MAC adresu a zdrojovú a cieľovú IP adresu. Hlavička obsahuje informácie o typu hardwareu, typ protokolu, operačného kódu `operation code` a veľkosti protokolových adries.[4]  
 
 ## Implementácia
 
@@ -74,7 +74,7 @@ Implementácia je rozdelená medzi parsovanie a sledovanie dát. Do `arg_parser`
 Program bol testovaný pomocou posielania paketov v programovaciom jazyku python pomocou knižnice `scapy`.  
 Všetky následujúce testy sa nachádzajú v `py_test.py`.
 
-Správny výstup je kontrolovaný pomocou programu wireshark. Výstup z wiresharku by mal byť identický s výstupom sledovača paketov.
+Správny výstup je kontrolovaný pomocou programu wireshark [5]. Výstup z wiresharku by mal byť identický s výstupom sledovača paketov.
 
 Príklad výstupu
 
@@ -170,4 +170,12 @@ icmp = ICMPv6EchoRequest()
 packet = ip / icmp
 send(packet) 
 ```
+
+## Zdroje
+
+[1][ IPK Project 2 - ZETA: Network sniffer](https://git.fit.vutbr.cz/NESFIT/IPK-Projects-2024/src/branch/master/Project%202/zeta). NESFIT. Accessed on April 10, 2024.  
+[2][ What is IPv4?](https://www.geeksforgeeks.org/what-is-ipv4/). GeeksforGeeks. Retrieved April 20, 2024.  
+[3][ Internet Protocol Version 6 (IPv6)](https://www.geeksforgeeks.org/internet-protocol-version-6-ipv6/). GeeksforGeeks. Retrieved April 16, 2024.  
+[4][ ARP Packet Format](https://www.geeksforgeeks.org/arp-protocol-packet-format/). GeeksforGeeks. Accessed on April 20, 2024.  
+[5][ Wireshark – About](https://www.wireshark.org/about.html). The Wireshark Foundation. Accessed on April 20, 2024.  
 
