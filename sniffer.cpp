@@ -83,7 +83,7 @@ void Sniffer::print_IP_port(const u_char *packet, struct ether_header *eth, cons
     if (ether_type == ETH_P_IP) {
         printIPv4(packet, header);
     } else if (ether_type == ETH_P_IPV6) {
-        printIPv6(packet);
+        printIPv6(packet, header);
     } else if (ether_type == ETH_P_ARP) {
         printARP(packet);
     }
@@ -145,12 +145,17 @@ std::string Sniffer::get_filters()
     std::string filters = "";
 
     //TODO might be problematic, check if it works
-    if(conn.port_dst != 0){
+    if(conn.port_src != 0 && conn.port_dst != 0){
+        filters += "(src port " + std::to_string(conn.port_src) + "|| dst port " + std::to_string(conn.port_dst) + ") &&";
+    }
+    else if(conn.port_dst != 0){
         filters += "dst port " + std::to_string(conn.port_dst) + "&&";
     }
-    if(conn.port_src != 0){
+    else if(conn.port_src != 0){
         filters += "src port " + std::to_string(conn.port_src) + "&&";
     }
+
+
     //
 
     if (conn.tcp && conn.udp)

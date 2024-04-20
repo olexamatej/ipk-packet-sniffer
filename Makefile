@@ -32,4 +32,4 @@ clean:
 
 run:
 	make
-	sudo ./ipk-sniffer -i eth0 --icmp4
+	sudo ./ipk-sniffer -i lo --udp -p 12345
