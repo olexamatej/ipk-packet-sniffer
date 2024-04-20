@@ -75,8 +75,8 @@ Connection parse_arg(int argc, char *argv[]){
         exit(EXIT_FAILURE);
     }
 
-    if (conn.port_src !=0 || conn.port_dst != 0 && !(conn.tcp || conn.udp)) {
-        fprintf(stderr, "If port is specified, either -t or -u must be specified.\n");
+    if ((conn.tcp || conn.udp) && conn.port_src == 0 && conn.port_dst == 0) {
+        fprintf(stderr, "If TCP or UDP is specified, either source port or destination port must be specified.\n");
         exit(EXIT_FAILURE);
     }
 

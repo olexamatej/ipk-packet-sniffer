@@ -128,7 +128,7 @@ std::string Sniffer::get_filters()
 
     //TODO might be problematic, check if it works
     if(conn.port_dst != 0){
-        filters += "dst port " + std::to_string(conn.port_dst) + "||";
+        filters += "dst port " + std::to_string(conn.port_dst) + "&&";
     }
     if(conn.port_src != 0){
         filters += "src port " + std::to_string(conn.port_src) + "&&";
@@ -170,7 +170,7 @@ std::string Sniffer::get_filters()
     }
     if (conn.mld)
     {
-        filters += "icmp6 and ip6[40] == 130";
+        filters += "icmp6 and ip6[40] == 130)";
     }
     // if there is ( at the end of the string, remove it
 
