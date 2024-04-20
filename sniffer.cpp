@@ -1,10 +1,5 @@
 #include "sniffer.h"
-#include <chrono>
-#include <ctime>
-#include <iomanip>
-#include <netinet/ether.h>
-#include <netinet/ip6.h>
-    #include <netinet/udp.h>
+
 
 
 Sniffer::Sniffer(Connection conn)
@@ -131,6 +126,7 @@ std::string Sniffer::get_filters()
 {   
     std::string filters = "";
 
+    //TODO might be problematic, check if it works
     if(conn.port_dst != 0){
         filters += "dst port " + std::to_string(conn.port_dst) + "||";
     }

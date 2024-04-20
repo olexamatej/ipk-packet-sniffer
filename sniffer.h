@@ -7,6 +7,12 @@
 #include <netinet/tcp.h>
 #include "connection.h"
 #include <string>
+#include <chrono>
+#include <ctime>
+#include <iomanip>
+#include <netinet/ether.h>
+#include <netinet/ip6.h>
+#include <netinet/udp.h>
 
 class Sniffer{
     public:

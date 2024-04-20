@@ -74,9 +74,11 @@ Connection parse_arg(int argc, char *argv[]){
         std::cerr << "Interface not specified. Usage: " << argv[0] << " -i interface [-p port] [-t] [-u]" << std::endl;
         exit(EXIT_FAILURE);
     }
-    if (conn.port != 0 && !(conn.tcp || conn.udp)) {
+
+    if (conn.port_src !=0 || conn.port_dst != 0 && !(conn.tcp || conn.udp)) {
         fprintf(stderr, "If port is specified, either -t or -u must be specified.\n");
         exit(EXIT_FAILURE);
     }
+
     return conn;
 }
