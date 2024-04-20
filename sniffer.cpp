@@ -60,16 +60,28 @@ void Sniffer::print_hexdump(const u_char *packet, int len)
 
 void Sniffer::print_timestamp(const struct pcap_pkthdr header)
 {
+
+    if(header.ts.tv_sec == 0){
+        exit(2);
+    }
     std::time_t ts = header.ts.tv_sec;
     std::tm *tm = std::localtime(&ts);
     std::cout << "timestamp: " << std::put_time(tm, "%FT%T%z") << std::endl;
 }
 
-void Sniffer::print_IP_port(const u_char *packet, struct ether_header *eth) {
+void Sniffer::print_IP_port(const u_char *packet, struct ether_header *eth, const struct pcap_pkthdr &header) {
+
+    if(eth == NULL){
+        exit(2);
+    }
+    if(packet == NULL){
+        exit(2);
+    }
+
     uint16_t ether_type = ntohs(eth->ether_type);
 
     if (ether_type == ETH_P_IP) {
-        printIPv4(packet);
+        printIPv4(packet, header);
     } else if (ether_type == ETH_P_IPV6) {
         printIPv6(packet);
     } else if (ether_type == ETH_P_ARP) {
@@ -77,7 +89,10 @@ void Sniffer::print_IP_port(const u_char *packet, struct ether_header *eth) {
     }
 }
 
-void Sniffer::printIPv4(const u_char *packet) {
+void Sniffer::printIPv4(const u_char *packet, const struct pcap_pkthdr &header) {
+    if (header.len < 14 + sizeof(struct ip)) {
+        return;
+    }
     struct ip *iph = (struct ip *)(packet + 14);
     struct tcphdr *tcph = (struct tcphdr *)(packet + 14 + iph->ip_hl * 4);
 
@@ -87,7 +102,10 @@ void Sniffer::printIPv4(const u_char *packet) {
     std::cout << "dst port: " << ntohs(tcph->dest) << "\n";
 }
 
-void Sniffer::printIPv6(const u_char *packet) {
+void Sniffer::printIPv6(const u_char *packet, const struct pcap_pkthdr &header) {
+    if (header.len < 14 + sizeof(struct ip6_hdr)) {
+        return;
+    }
     struct ip6_hdr *ip6h = (struct ip6_hdr *)(packet + 14);
     struct tcphdr *tcph = (struct tcphdr *)(packet + 14 + 40);
     char src_ip[INET6_ADDRSTRLEN];
@@ -249,6 +267,13 @@ int Sniffer::sniff() {
         
         packet = pcap_next(this->handle, &header);
 
+        if (!packet || header.len < sizeof(struct ether_header)) {
+            continue;
+        }
+        if (!packet) {
+            continue;
+        }
+
         // parse ethernet header
         struct ether_header *eth = (struct ether_header *)packet;
 
@@ -258,7 +283,7 @@ int Sniffer::sniff() {
         print_mac(packet, 6, "src MAC: ");
         print_mac(packet, 0, "dst MAC: ");
         print_frame_length(header);
-        print_IP_port(packet, eth);
+        print_IP_port(packet, eth, header);
         print_hexdump(packet, header.len);
     }
 

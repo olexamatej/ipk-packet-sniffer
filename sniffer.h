@@ -24,9 +24,9 @@ class Sniffer{
         void print_hexdump(const u_char *packet, int len);
         void print_timestamp(const struct pcap_pkthdr header);
         void print_frame_length(const struct pcap_pkthdr header);
-        void print_IP_port(const u_char *packet, struct ether_header *eth);
-        void printIPv4(const u_char *packet);
-        void printIPv6(const u_char *packet);
+        void print_IP_port(const u_char *packet, struct ether_header *eth, const struct pcap_pkthdr &header);
+        void printIPv4(const u_char *packet,const struct pcap_pkthdr &header);
+        void printIPv6(const u_char *packet, const struct pcap_pkthdr &header);
         void printARP(const u_char *packet);
 
         private:
