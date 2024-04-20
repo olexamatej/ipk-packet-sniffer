@@ -39,8 +39,26 @@ Implementácia sledovača packetov `packet sniffer` pomocou použitia knižnice 
 - `sniffer.cpp`
 - `sniffer.h`
 
+## Teória k implementácii
+
+Sledovač paketov zachytáva pakety zo sieťovej komunikácie na úrovni rozhraní. Knižnica PCAP umožňuje filtráci ua zachytávanie paketov rôznych rozhraní, ktoré sú následne spracované a vypísané na stdout. Zachytávanie paketov je v svojom jadre rovnaké pre všetky typy paketov, ale v niektorých častiach spracovania sa líši. Z tohto dôvodu je hlavné sledovanie rozdelené pre IPv4, IPv6 pakety a ARP rozhranie.
+
+### IPv4 pakety
+IPv4 pakety sú základom prenosu dát pomocou `Internet Protocol version 4`. Každý paket má svoju hlavičku `header` a dáta `payload`. Hlavička obsahuje informácie o prenose dát s informáciami ako je dĺžka paketu, IP adresy a kontrolný súčet `checksum`.
+
+Veľkosť hlavičky tohto paketu nieje vopred daná a následuju ju dáta `payload`. IP adresa je dlhá 32 bitov.  
+
+### IPv6 pakety
+IPv6 pakety slúžia na prenos dát v `Internet Protocol version 6`. Každý paket má svoju hlavičku `header` a dáta `payload`. Hlavička obsahuje informácie pre prenos dát a ich doručenie, ako sú IP adresy, dĺžka paketu, `traffic class`, `flow label`, `hop limit` a ďalšie pole hlavičky, ktoré určuje aký typ dát je prenášaný v `payload`.
+
+Veľkosť hlavičky tohto paketu je 40 byteov. Hlavička taktiež obsahuje informácie naviac, oproti IPv4 paketom. IPv6 podporuje rozšírenú hlavičku, ktorá obsahuje ďalšie informácie a rozšírenie. IPv6 pakety neobsahujú konečný súčet. IP adresa je dlhá 128 bitov a je v hexadecimálnom formáte.
+
+### ARP pakety
+ARP pakety sú používané pre mapovaní IP adries na MAC adresy na lokálnej sieti. Sú zložené z hlavičky `header` nasledovanou poľami pre zdrojovú a cieľovú MAC adresu a zdrojovú a cieľovú IP adresu. Hlavička obsahuje informácie o typu hardwareu, typ protokolu, operačného kódu `operation code` a veľkosti protokolových adries.
+
 ## Implementácia
 
+Pri 
 
 
 
