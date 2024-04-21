@@ -5,6 +5,7 @@ Connection parse_arg(int argc, char *argv[]){
     Connection conn;
     int opt;
   
+    // long options for getopt function
     const option long_options[] = {
         {"interface", required_argument, NULL, 'i'},
         {"tcp", no_argument, NULL, 't'},
@@ -21,21 +22,27 @@ Connection parse_arg(int argc, char *argv[]){
     };
     int option_index = 0;
 
+    // parse command line arguments, it checks long and short versions
     while ((opt = getopt_long(argc, argv, "i:p:tun:", long_options, &option_index)) != -1) {
         switch (opt) {
+            // interface
         case 'i':
             conn.interface = optarg;
             break;
+            // port
         case 'p':
             conn.port_dst = atoi(optarg);
             conn.port_src = atoi(optarg);
             break;
+            // TCP
         case 't':
             conn.tcp = true;
             break;
+            // UDP
         case 'u':
             conn.udp = true;
             break;
+            // number of packets
         case 'n':
             if (optarg == NULL) {
                 std::cerr << "Error: -n requires a numeric argument\n";
@@ -43,7 +50,9 @@ Connection parse_arg(int argc, char *argv[]){
             }
             conn.num_packets = atoi(optarg);
             break;
+            //long options
         case 0:
+            // check which long option was specified
             if (strcmp(long_options[option_index].name, "arp") == 0) {
                 conn.arp = true;
             } else if (strcmp(long_options[option_index].name, "icmp4") == 0) {
@@ -69,16 +78,12 @@ Connection parse_arg(int argc, char *argv[]){
             exit(EXIT_FAILURE);
         }
     }
-
+    // checks for missing obligatory arguments
     if (conn.interface.empty()) {
         std::cerr << "Interface not specified. Usage: " << argv[0] << " -i interface [-p port] [-t] [-u]" << std::endl;
         exit(EXIT_FAILURE);
     }
 
-    if ((conn.tcp || conn.udp) && conn.port_src == 0 && conn.port_dst == 0) {
-        fprintf(stderr, "If TCP or UDP is specified, either source port or destination port must be specified.\n");
-        exit(EXIT_FAILURE);
-    }
 
     return conn;
 }

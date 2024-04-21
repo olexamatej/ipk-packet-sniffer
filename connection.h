@@ -3,6 +3,7 @@
 #include <string>
 #include <iostream>
 
+// Connection class, used for storing connection parameters
 class Connection{
     public:
         Connection();

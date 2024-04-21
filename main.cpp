@@ -2,21 +2,21 @@
 #include "connection.h"
 #include "sniffer.h"
 
+#include <csignal> 
 
-
-#include <csignal> // Add this line to include the <csignal> header
-
+// Signal handler for SIGINT
 void sigint_handler(int signum) {
     std::cout << "Interrupt signal received" << std::endl;
     
     exit(0);
 }
 
+// Main function
 int main(int argc, char *argv[])
 {
     //handle sigint
     signal(SIGINT, sigint_handler);
-
+    
     Connection conn = parse_arg(argc, argv);
     Sniffer sniffer(conn);
 

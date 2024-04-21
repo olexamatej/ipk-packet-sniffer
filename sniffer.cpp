@@ -1,18 +1,20 @@
 #include "sniffer.h"
 
 
-
+// Constructor
 Sniffer::Sniffer(Connection conn)
 {   
     this->handle = NULL;
     this->conn = conn;
 }
 
+// printing frame length
 void Sniffer::print_frame_length(const struct pcap_pkthdr header)
 {
     std::cout << "frame length: " << header.len << std::endl;
 }
 
+// printing MAC address
 void Sniffer::print_mac(const u_char *packet, int start, const char *label)
 {
     std::cout << label;
@@ -27,6 +29,7 @@ void Sniffer::print_mac(const u_char *packet, int start, const char *label)
     std::cout << std::endl;
 }
 
+// printing hexdump
 void Sniffer::print_hexdump(const u_char *packet, int len)
 {
     for (int i = 0; i < len; ++i)
@@ -58,6 +61,7 @@ void Sniffer::print_hexdump(const u_char *packet, int len)
     }
 }
 
+// printing timestamp
 void Sniffer::print_timestamp(const struct pcap_pkthdr header)
 {
 
@@ -69,6 +73,7 @@ void Sniffer::print_timestamp(const struct pcap_pkthdr header)
     std::cout << "timestamp: " << std::put_time(tm, "%FT%T%z") << std::endl;
 }
 
+// printing IP and port, it chooses between IPv4, IPv6 and ARP
 void Sniffer::print_IP_port(const u_char *packet, struct ether_header *eth, const struct pcap_pkthdr &header) {
 
     if(eth == NULL){
@@ -89,7 +94,9 @@ void Sniffer::print_IP_port(const u_char *packet, struct ether_header *eth, cons
     }
 }
 
+// printing IPv4
 void Sniffer::printIPv4(const u_char *packet, const struct pcap_pkthdr &header) {
+    // check if the packet is long enough
     if (header.len < 14 + sizeof(struct ip)) {
         return;
     }
@@ -102,7 +109,9 @@ void Sniffer::printIPv4(const u_char *packet, const struct pcap_pkthdr &header) 
     std::cout << "dst port: " << ntohs(tcph->dest) << "\n";
 }
 
+//* printing IPv6
 void Sniffer::printIPv6(const u_char *packet, const struct pcap_pkthdr &header) {
+    // check if the packet is long enough
     if (header.len < 14 + sizeof(struct ip6_hdr)) {
         return;
     }
@@ -116,9 +125,9 @@ void Sniffer::printIPv6(const u_char *packet, const struct pcap_pkthdr &header) 
     std::cout << "dst port: " << ntohs(tcph->dest) << "\n";
 }
 
+// printing ARP
 void Sniffer::printARP(const u_char *packet) {
     struct ether_arp *arp = (struct ether_arp *)(packet + 14);
-
     std::cout << "src IP: ";
     for (int i = 0; i < 4; i++) {
         printf("%d", arp->arp_spa[i]);
@@ -139,12 +148,12 @@ void Sniffer::printARP(const u_char *packet) {
 }
 
 
-
+// parsing filters
 std::string Sniffer::get_filters()
 {   
     std::string filters = "";
 
-    //TODO might be problematic, check if it works
+    // parsing ports
     if(conn.port_src != 0 && conn.port_dst != 0){
         filters += "(src port " + std::to_string(conn.port_src) + "|| dst port " + std::to_string(conn.port_dst) + ") &&";
     }
@@ -156,8 +165,7 @@ std::string Sniffer::get_filters()
     }
 
 
-    //
-
+    // parsing protocols
     if (conn.tcp && conn.udp)
     {
         filters += "(tcp || udp) &&";
@@ -217,7 +225,7 @@ std::string Sniffer::get_filters()
 
     return filters;
 }
-
+// initializing pcap
 int Sniffer::init_pcap() {
     char errbuf[PCAP_ERRBUF_SIZE]; // Error string
     struct bpf_program fp;         // compiled filter
@@ -259,6 +267,7 @@ int Sniffer::init_pcap() {
     return 0;
 }
 
+// sniffing packets
 int Sniffer::sniff() {
     struct pcap_pkthdr header;        // pcap header
     const u_char *packet;             // packet
@@ -267,15 +276,11 @@ int Sniffer::sniff() {
         return 2;
     }
 
+    //printing N packets
     for(int i = 0; i < conn.num_packets; i++){
-        
-        
         packet = pcap_next(this->handle, &header);
-
+        //checks for evading segfault
         if (!packet || header.len < sizeof(struct ether_header)) {
-            continue;
-        }
-        if (!packet) {
             continue;
         }
 
@@ -283,7 +288,7 @@ int Sniffer::sniff() {
         struct ether_header *eth = (struct ether_header *)packet;
 
         struct ip *iph = (struct ip *)(packet + 14);
-        
+        // print packet
         print_timestamp(header);
         print_mac(packet, 6, "src MAC: ");
         print_mac(packet, 0, "dst MAC: ");

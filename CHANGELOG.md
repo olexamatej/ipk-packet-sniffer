@@ -13,7 +13,6 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 - Initial release
 - Everything is implemented according to assignment
 
-
 ## [0.3.0] - 20. 4. 2024
 
 ### Added

@@ -1,5 +1,7 @@
 #include "connection.h"
 
+
+// Constructor
 Connection::Connection(){
     this->port_dst = 0;
     this->port_src = 0;
@@ -13,7 +15,7 @@ Connection::Connection(){
     this->mld = false;
     this->ndp = false;
 }
-
+// debugging function
 void Connection::print_connection(){
     std::cout << "Interface: " << this->interface << std::endl;
     std::cout << "TCP: " << this->tcp << std::endl;
