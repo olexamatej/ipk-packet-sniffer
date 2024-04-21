@@ -33,6 +33,7 @@ class Sniffer{
         Connection conn;
         pcap_t *handle;
 };
+void printInterfaces();
 
 
 #endif

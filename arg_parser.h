@@ -10,6 +10,9 @@
 #include <string>
 #include <cstring>
 #include "connection.h"
+#include "sniffer.h"
+
+
 
 Connection parse_arg(int argc, char *argv[]);
 

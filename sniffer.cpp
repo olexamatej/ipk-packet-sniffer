@@ -84,14 +84,14 @@ void Sniffer::print_IP_port(const u_char *packet, struct ether_header *eth, cons
     }
 
     uint16_t ether_type = ntohs(eth->ether_type);
-
+    
     if (ether_type == ETH_P_IP) {
         printIPv4(packet, header);
     } else if (ether_type == ETH_P_IPV6) {
         printIPv6(packet, header);
     } else if (ether_type == ETH_P_ARP) {
         printARP(packet);
-    }
+    } 
 }
 
 // printing IPv4
@@ -235,13 +235,12 @@ int Sniffer::init_pcap() {
     bpf_u_int32 mask;                 // subnet mask
     bpf_u_int32 net;                  // IP
 
-    // getting interface
-    const char *dev = conn.interface.c_str();
+    const char *dev = this->conn.interface.c_str(); // use the specified interface
 
     // getting netmask
     if (pcap_lookupnet(dev, &net, &mask, errbuf) == -1)
     {
-        fprintf(stderr, "Couldn't get netmask for device %s: %s\n", dev, errbuf);
+        fprintf(stderr, "ERR: Couldn't get netmask for device %s: %s\n", dev, errbuf);
         net = 0;
         mask = 0;
     }
@@ -249,23 +248,43 @@ int Sniffer::init_pcap() {
     handle = pcap_open_live(dev, BUFSIZ, 1, 1000, errbuf);
     if (handle == NULL)
     {
-        fprintf(stderr, "Couldn't open device %s: %s\n", dev, errbuf);
+        fprintf(stderr, "ERR: Couldn't open device %s: %s\n", dev, errbuf);
         return (2);
     }
     // applying filter
     if (pcap_compile(handle, &fp, filter_exp.c_str(), 0, net) == -1)
     {
-        fprintf(stderr, "Couldn't parse filter %s: %s\n", filter_exp.c_str(), pcap_geterr(handle));
+        fprintf(stderr, "ERR: Couldn't parse filter %s: %s\n", filter_exp.c_str(), pcap_geterr(handle));
         return (2);
     }
     if (pcap_setfilter(handle, &fp) == -1)
     {
-        fprintf(stderr, "Couldn't install filter %s: %s\n", filter_exp.c_str(), pcap_geterr(handle));
+        fprintf(stderr, "ERR: Couldn't install filter %s: %s\n", filter_exp.c_str(), pcap_geterr(handle));
         return (2);
     }
 
     return 0;
 }
+
+void printInterfaces(){
+    pcap_if_t *alldevs;
+    char errbuf[PCAP_ERRBUF_SIZE];
+
+    if (pcap_findalldevs(&alldevs, errbuf) == -1)
+    {
+        fprintf(stderr, "Error in pcap_findalldevs: %s\n", errbuf);
+        exit(EXIT_FAILURE);
+    }
+
+    for (pcap_if_t *d = alldevs; d; d = d->next)
+    {
+        printf("%s\n", d->name);
+    }
+
+    pcap_freealldevs(alldevs);
+
+}
+
 
 // sniffing packets
 int Sniffer::sniff() {

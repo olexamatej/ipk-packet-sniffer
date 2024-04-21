@@ -1,11 +1,11 @@
 from scapy.all import *
 
 # UDP and SRC port
-ether = Ether(dst="ff:ff:ff:ff:ff:ff")
-ip = IP(dst="127.0.0.1")
-udp = UDP(sport=1234, dport=4567)
-packet = ether / ip / udp
-sendp(packet)
+# ether = Ether(dst="ff:ff:ff:ff:ff:ff")
+# ip = IP(dst="127.0.0.1")
+# udp = UDP(sport=1234, dport=4567)
+# packet = ether / ip / udp
+# sendp(packet)
 
 # TCP and DSTPORT
 # ether = Ether(dst="ff:ff:ff:ff:ff:ff")
@@ -42,7 +42,7 @@ sendp(packet)
 # send(packet)
 
 # icmp6
-# ip = IPv6(dst="::1")
-# icmp = ICMPv6EchoRequest()
-# packet = ip / icmp
-# send(packet)
+ip = IPv6(dst="::1")
+icmp = ICMPv6EchoRequest()
+packet = ip / icmp
+send(packet)
