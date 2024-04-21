@@ -241,6 +241,7 @@ int Sniffer::init_pcap() {
     if (pcap_lookupnet(dev, &net, &mask, errbuf) == -1)
     {
         fprintf(stderr, "ERR: Couldn't get netmask for device %s: %s\n", dev, errbuf);
+        return (2);
         net = 0;
         mask = 0;
     }
@@ -306,7 +307,6 @@ int Sniffer::sniff() {
         // parse ethernet header
         struct ether_header *eth = (struct ether_header *)packet;
 
-        struct ip *iph = (struct ip *)(packet + 14);
         // print packet
         print_timestamp(header);
         print_mac(packet, 6, "src MAC: ");
